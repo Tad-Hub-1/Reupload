@@ -4,7 +4,8 @@ reupload_with_map.py
 Fetches and reuploads assets, then generates a JSON map (reupload_map.json)
 of {oldId, newId} pairs for a Roblox plugin to consume.
 
-YOU MUST PROVIDE CREDENTIALS YOURSELF (either X_API_KEY or ROBLOSECURITY_COOKIE).
+Credentials are now embedded in this file.
+DO NOT SHARE THIS FILE.
 """
 
 import os
@@ -21,27 +22,31 @@ except Exception:
     print("Please install requests: pip install requests")
     sys.exit(1)
 
-# ----------------- Config loading -----------------
-BASE_DIR = Path(__file__).parent
-CFG_PATH = BASE_DIR / "config.json"
+# ----------------- Config (แก้ไขส่วนนี้) -----------------
+# ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️
+# ‼️   คำเตือน: ห้ามแชร์ไฟล์นี้ให้ใครเด็ดขาด ‼️
+# ‼️   เพราะมี API Key/Cookie ของคุณอยู่ข้างใน ‼️
+# ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️ ‼️
 
-DEFAULT_CFG = {
+cfg = {
+    # --- ใส่ Key ของคุณที่นี่ ---
+    # (เช่น "rbx-api-key_12345...")
     "x_api_key": None,
+    
+    # --- หรือใส่ Cookie ของคุณที่นี่ (ถ้าไม่ใช้ API Key) ---
+    # (ตั้ง x_api_key เป็น None ถ้าใช้ Cookie)
     "roblosecurity": None,
+    
+    # --- (ส่วนนี้ไม่ต้องแก้ไข) ---
     "download_endpoint": "https://apis.roblox.com/asset-delivery-api/v1/assetId/{assetId}",
     "upload_endpoint": "https://apis.roblox.com/assets/v1/assets"
 }
 
-# (ส่วน Config loading เหมือนเดิม)
-if CFG_PATH.exists():
-    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
-else:
-    cfg = DEFAULT_CFG.copy()
-    if not CFG_PATH.exists():
-        CFG_PATH.write_text(json.dumps(DEFAULT_CFG, indent=2), encoding="utf-8")
-        print(f"[INFO] Created example config.json at {CFG_PATH}. Edit it to add your x_api_key or roblosecurity.")
-        print("Edit config.json and add your credentials, then re-run this script.")
-cfg = {**DEFAULT_CFG, **(cfg or {})}
+# ----------------- (End of Config) -----------------
+
+# เรายังต้องการ BASE_DIR เพื่อใช้บันทึก reupload_map.json
+BASE_DIR = Path(__file__).parent
+
 
 # ----------------- Helpers (เหมือนเดิม) -----------------
 def build_headers():
@@ -130,7 +135,7 @@ def upload_asset(file_bytes, filename, display_name, description, asset_type):
     except Exception:
         return False, f"Upload returned non-json: {r.text[:1000]}"
 
-# ----------------- Reupload Logic (อัปเกรด) -----------------
+# ----------------- Reupload Logic (เหมือนเดิม) -----------------
 def process_reupload(asset_id, dname, ddesc, atype):
     """
     ประมวลผล 1 Asset ID
@@ -173,13 +178,12 @@ def process_reupload(asset_id, dname, ddesc, atype):
         time.sleep(1)
         return False, None
 
-# ----------------- Save Map Function (ใหม่) -----------------
+# ----------------- Save Map Function (เหมือนเดิม) -----------------
 def save_id_map(id_pairs_list):
     """
     รับ list ของ tuples (old_id, new_id) และบันทึกเป็น json
     ที่เข้ากันได้กับ IdPair type ของ Luau
     """
-    # แปลงเป็น format ที่ Luau script ของคุณต้องการ: {oldId: number, newId: number}
     map_data = []
     for old, new in id_pairs_list:
         map_data.append({"oldId": int(old), "newId": int(new)})
@@ -196,11 +200,18 @@ def save_id_map(id_pairs_list):
 # ----------------- CLI flow (อัปเกรด) -----------------
 def main():
     print("Asset Reupload & Map Generator")
-    if not cfg.get("x_api_key") and not cfg.get("roblosecurity"):
-        print("[WARNING] No auth configured. Edit config.json. Exiting.")
-        return
+    
+    # --- [แก้ไข] ตรวจสอบ Config ที่ฝังไว้ ---
+    key = cfg.get("x_api_key")
+    cookie = cfg.get("roblosecurity")
 
-    all_id_pairs = [] # <--- ตัวเก็บ ID ที่อัปโหลดสำเร็จ
+    if (not key and not cookie) or (key == "ใส่_API_KEY_ของคุณที่นี่"):
+        print("[ERROR] Auth not configured!")
+        print("Please edit this .py file and add your 'x_api_key' or 'roblosecurity' to the 'cfg' section at the top.")
+        return
+    # --- [จบการแก้ไข] ---
+
+    all_id_pairs = [] 
 
     while True:
         print("\nChoose operation mode:")
@@ -213,7 +224,7 @@ def main():
             print("Exiting.")
             break
         
-        all_id_pairs = [] # <--- รีเซ็ตทุกครั้งที่เริ่มโหมดใหม่
+        all_id_pairs = [] 
 
         # ----- โหมดที่ 1: Batch จากไฟล์ -----
         if mode == '1':
@@ -242,11 +253,11 @@ def main():
                 success, new_id = process_reupload(asset_id, dname, ddesc, atype)
                 
                 if success and new_id:
-                    all_id_pairs.append((asset_id, new_id)) # <--- เก็บ ID ที่สำเร็จ
+                    all_id_pairs.append((asset_id, new_id)) 
             
             print("[BATCH] Batch processing complete.")
             if all_id_pairs:
-                save_id_map(all_id_pairs) # <--- บันทึกไฟล์หลังจบ batch
+                save_id_map(all_id_pairs) 
 
         # ----- โหมดที่ 2: ป้อน ID เอง -----
         elif mode == '2':
@@ -256,12 +267,12 @@ def main():
                 if aid.lower() in ("q", "quit", "exit"):
                     print("Exiting.")
                     if all_id_pairs:
-                        save_id_map(all_id_pairs) # <--- บันทึกไฟล์ก่อนออก
+                        save_id_map(all_id_pairs) 
                     sys.exit()
                 if aid.lower() == 'b':
                     print("Returning to main menu...")
                     if all_id_pairs:
-                        save_id_map(all_id_pairs) # <--- บันทึกไฟล์ก่อนกลับเมนู
+                        save_id_map(all_id_pairs) 
                     break 
                 
                 if not aid.isdigit():
@@ -274,7 +285,7 @@ def main():
 
                 success, new_id = process_reupload(aid, dname, ddesc, atype)
                 if success and new_id:
-                    all_id_pairs.append((aid, new_id)) # <--- เก็บ ID ที่สำเร็จ
+                    all_id_pairs.append((aid, new_id)) 
 
         else:
             print("Invalid mode. Please enter 1, 2, or q.")
