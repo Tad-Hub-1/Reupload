@@ -3,7 +3,8 @@ local ApiDump = {}
 
 local API_DUMP_URL = "https://raw.githubusercontent.com/MaximumADHD/Roblox-Client-Tracker/refs/heads/roblox/API-Dump.json"
 
-local retry = require("./Retry")
+-- [[ PATH EDITED ]]
+local retry = require(script.Parent.Retry)
 
 local HttpService = game:GetService("HttpService")
 
