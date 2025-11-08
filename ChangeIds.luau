@@ -1,7 +1,8 @@
 --!strict
-local ApiDump = require("../ApiDump")
-local retry = require("../Retry")
-local WaitGroup = require("../WaitGroup")
+-- [[ PATHS EDITED ]]
+local ApiDump = require(script.Parent.ApiDump)
+local retry = require(script.Parent.Retry)
+local WaitGroup = require(script.Parent.WaitGroup)
 
 local ScriptEditorService = game:GetService("ScriptEditorService")
 local AssetService = game:GetService("AssetService")
